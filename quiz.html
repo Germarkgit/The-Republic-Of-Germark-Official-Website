@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Germark Citizenship Quiz</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4fdf7;
+      color: #1e3d2f;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #14532d;
+    }
+    .quiz-box {
+      max-width: 700px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .question {
+      margin-bottom: 1.5rem;
+    }
+    .question h3 {
+      margin-bottom: 0.5rem;
+    }
+    .options label {
+      display: block;
+      margin: 0.3rem 0;
+      cursor: pointer;
+    }
+    button {
+      background-color: #2f855a;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    #result {
+      margin-top: 2rem;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Germark Citizenship Quiz</h1>
+  <div class="quiz-box" id="quiz">
+    <!-- Questions will be injected here -->
+  </div>
+  <div id="result"></div>
+
+  <script>
+    const questions = [
+      {
+        question: "Who is Germark’s founding citizen?",
+        options: ["Björn", "Mouhammad", "Ludvig", "Kevin"],
+        answer: 1
+      },
+      {
+        question: "What is Germark’s symbolic capital made of?",
+        options: ["A paper map", "A virtual server", "A 3D-printed city", "A blockchain token"],
+        answer: 2
+      },
+      {
+        question: "Which value is part of Germark’s principles?",
+        options: ["Digital surveillance", "Military expansion", "Isolationism", "Peace and innovation"],
+        answer: 3
+      },
+      {
+        question: "How does Germark assign identity to citizens?",
+        options: ["By email address", "By Chip ID and name", "By birth certificate", "By passport number"],
+        answer: 1
+      },
+      {
+        question: "Which organization’s principles should Germark follow?",
+        options: ["UN", "EU", "WHO", "NATO"],
+        answer: 0
+      }
+    ];
+
+    const quizBox = document.getElementById("quiz");
+
+    questions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<h3>${i + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, j) => {
+        div.innerHTML += `
+          <label>
+            <input type="radio" name="q${i}" value="${j}" />
+            ${opt}
+          </label>
+        `;
+      });
+      quizBox.appendChild(div);
+    });
+
+    const submitBtn = document.createElement("button");
+    submitBtn.textContent = "Submit Quiz";
+    submitBtn.onclick = () => {
+      let score = 0;
+      questions.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && parseInt(selected.value) === q.answer) {
+          score++;
+        }
+      });
+      const result = document.getElementById("result");
+      if (score >= 4) {
+        result.textContent = `✅ You passed! Score: ${score}/5. Welcome to Germark.`;
+      } else {
+        result.textContent = `❌ You did not pass. Score: ${score}/5. Please try again.`;
+      }
+    };
+    quizBox.appendChild(submitBtn);
+  </script>
+</body>
+</html>
