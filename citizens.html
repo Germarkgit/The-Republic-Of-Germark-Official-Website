@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Germark Citizen Registry</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4fdf7;
+      color: #1e3d2f;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #14532d;
+    }
+    .form-box, .citizen-list {
+      max-width: 600px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #2f855a;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .citizen {
+      background-color: #e6f4ec;
+      padding: 0.8rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Germark Citizen Registry</h1>
+
+  <div class="form-box">
+    <h2>Add New Citizen</h2>
+    <input type="text" id="name" placeholder="Full Name" />
+    <input type="text" id="chipId" placeholder="Chip ID" />
+    <button onclick="addCitizen()">Add Citizen</button>
+  </div>
+
+  <div class="citizen-list">
+    <h2>Registered Citizens</h2>
+    <div id="citizens"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-_OC_REtYYzHwJ_K0eAv8TeDOo3FOEmU",
+      authDomain: "germarkcitizenregistry.firebaseapp.com",
+      projectId: "germarkcitizenregistry",
+      storageBucket: "germarkcitizenregistry.firebasestorage.app",
+      messagingSenderId: "828002476150",
+      appId: "1:828002476150:web:ef2214381763ebcb24bf57",
+      measurementId: "G-FFM41DE4K1",
+      databaseURL: "https://germarkcitizenregistry-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    function addCitizen() {
+      const name = document.getElementById("name").value.trim();
+      const chipId = document.getElementById("chipId").value.trim();
+      if (!name || !chipId) return alert("Please enter both name and Chip ID");
+
+      set(ref(db, "citizens/" + chipId), {
+        name: name,
+        chipId: chipId,
+        timestamp: Date.now()
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("chipId").value = "";
+    }
+
+    const citizensDiv = document.getElementById("citizens");
+    const citizensRef = ref(db, "citizens");
+
+    onValue(citizensRef, (snapshot) => {
+      const data = snapshot.val();
+      citizensDiv.innerHTML = "";
+      for (const id in data) {
+        const citizen = data[id];
+        const div = document.createElement("div");
+        div.className = "citizen";
+        div.innerHTML = `<strong>Name:</strong> ${citizen.name}<br><strong>Chip ID:</strong> ${citizen.chipId}`;
+        citizensDiv.appendChild(div);
+      }
+    });
+  </script>
+</body>
+</html>
