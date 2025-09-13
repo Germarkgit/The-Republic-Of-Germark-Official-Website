@@ -1,280 +1,252 @@
-/* Global Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
+// Initialize citizens if not already stored
+let citizens = JSON.parse(localStorage.getItem("germarkCitizens"));
+if (!citizens) {
+  citizens = {
+    "001": "Mouhammad",
+    "002": "Björn",
+    "003": "Ludvig c",
+    "004": "Andre",
+    "005": "Lucas",
+    "006": "Johan",
+    "007": "Abdul",
+    "008": "Astrid",
+    "009": "Sander",
+    "010": "Frederik"
+  };
+  localStorage.setItem("germarkCitizens", JSON.stringify(citizens));
 }
 
-body {
-  background-color: #e6f4ec; /* soft green */
-  color: #1e3d2f; /* deep green text */
-}
+let currentUser = null;
 
-/* Login Screen */
-.login-box {
-  position: relative;
-  text-align: center;
-  padding: 3rem 1rem;
-  background-color: #d1e7dc;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  max-width: 500px;
-  margin: 5rem auto;
-  animation: zoomIn 0.6s ease;
-}
+// Login
+function login() {
+  const chipId = document.getElementById("chip-id").value.trim();
+  const name = document.getElementById("name").value.trim();
 
-@keyframes zoomIn {
-  0% {
-    transform: scale(0.7);
-    opacity: 0;
+  if (citizens[chipId] && citizens[chipId].toLowerCase() === name.toLowerCase()) {
+    currentUser = citizens[chipId];
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("home-screen").style.display = "block";
+    document.getElementById("profile-name").textContent = currentUser;
+    document.getElementById("login-error").style.display = "none";
+    loadProfileImage();
+    loadApartment();
+    showTab("about");
+  } else {
+    document.getElementById("login-error").style.display = "block";
   }
-  100% {
-    transform: scale(1);
-    opacity: 1;
+}
+
+// Tabs
+function showTab(tabId) {
+  document.querySelectorAll(".tab-content").forEach(tab => {
+    tab.classList.remove("active");
+    tab.style.display = "none";
+  });
+
+  const activeTab = document.getElementById(tabId);
+  activeTab.style.display = "block";
+  activeTab.classList.add("active");
+
+  if (tabId === "news") displayNews();
+  if (tabId === "passport") loadPassportTab();
+}
+
+// Passport
+function createPassport() {
+  const password = document.getElementById("passport-create").value.trim();
+  if (!password || !currentUser) return;
+
+  localStorage.setItem(`passport_${currentUser}`, password);
+  document.getElementById("passport-setup").style.display = "none";
+  document.getElementById("passport-login").style.display = "block";
+  document.getElementById("passport-create").value = "";
+}
+
+function unlockPassport() {
+  const input = document.getElementById("passport-password").value.trim();
+  const saved = localStorage.getItem(`passport_${currentUser}`);
+
+  if (input === saved) {
+    document.getElementById("passport-login").style.display = "none";
+    document.getElementById("passport-content").style.display = "block";
+    document.getElementById("passport-password").value = "";
+  } else {
+    alert("Incorrect password.");
   }
 }
 
-.login-icon {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  width: 40px;
-  height: auto;
-  border-radius: 50%;
+function loadPassportTab() {
+  const saved = localStorage.getItem(`passport_${currentUser}`);
+  if (saved) {
+    document.getElementById("passport-setup").style.display = "none";
+    document.getElementById("passport-login").style.display = "block";
+  } else {
+    document.getElementById("passport-setup").style.display = "block";
+    document.getElementById("passport-login").style.display = "none";
+  }
+  document.getElementById("passport-content").style.display = "none";
 }
 
-.flag-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
+// Profile Images
+function saveProfileImage() {
+  const files = document.getElementById("profile-image").files;
+  const gallery = document.getElementById("profile-gallery");
+  gallery.innerHTML = "";
+
+  const images = [];
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function () {
+      images.push(reader.result);
+      localStorage.setItem(`profile_${currentUser}`, JSON.stringify(images));
+      displayProfileImages(images);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
-.flag {
-  width: 100px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+function loadProfileImage() {
+  const images = JSON.parse(localStorage.getItem(`profile_${currentUser}`) || "[]");
+  displayProfileImages(images);
 }
 
-h1 {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  color: #14532d;
-  text-shadow: 0 0 2px #d4af37; /* golden glow */
+function displayProfileImages(images) {
+  const gallery = document.getElementById("profile-gallery");
+  gallery.innerHTML = "";
+  images.forEach(src => {
+    const img = document.createElement("img");
+    img.src = src;
+    gallery.appendChild(img);
+  });
 }
 
-input[type="text"],
-input[type="password"],
-textarea {
-  width: 80%;
-  max-width: 400px;
-  padding: 0.6rem;
-  margin: 0.5rem auto;
-  display: block;
-  border: 1px solid #cce3d8;
-  border-radius: 6px;
-  background-color: #ffffff;
+// Admin Panel
+function unlockAdmin() {
+  const password = document.getElementById("admin-password").value;
+  if (password === "Germark2025") {
+    document.getElementById("admin-panel").style.display = "block";
+    updateCitizenList();
+  } else {
+    alert("Access Denied");
+  }
 }
 
-button {
-  padding: 0.6rem 1.2rem;
-  margin-top: 0.5rem;
-  background-color: #2f855a;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
+function addCitizen() {
+  const chipId = document.getElementById("new-chip-id").value.trim();
+  const name = document.getElementById("new-citizen-name").value.trim();
 
-button:hover {
-  background-color: #276749;
-}
-
-/* Error Message */
-#login-error {
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-/* Home Screen */
-.screen {
-  padding: 1rem;
-}
-
-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  background-color: #14532d;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  color: white;
-}
-
-.logo-small {
-  width: 40px;
-  height: auto;
-  border-radius: 50%;
-}
-
-.flag-small {
-  width: 60px;
-  height: auto;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-h2 {
-  font-size: 1.5rem;
-  color: #fefefe;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.tabs button {
-  background-color: #d1e7dc;
-  color: #14532d;
-  border: 1px solid #cce3d8;
-}
-
-.tabs button:hover {
-  background-color: #c0dbc9;
-}
-
-/* Tab Wrapper and Transitions */
-.tab-wrapper {
-  position: relative;
-  overflow: hidden;
-  min-height: 300px;
-}
-
-.tab-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  transition: transform 0.4s ease, opacity 0.4s ease;
-  opacity: 0;
-  transform: translateX(100%);
-  pointer-events: none;
-}
-
-.tab-content.active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
-  position: relative;
-}
-
-/* News */
-.news-articles article {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-left: 4px solid #2f855a;
-  background-color: #f0fdf4;
-  border-radius: 6px;
-}
-
-.news-articles h5 {
-  margin-bottom: 0.5rem;
-  color: #14532d;
-}
-
-.news-image {
-  max-width: 100%;
-  margin-top: 0.5rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.qr-code {
-  width: 120px;
-  margin: 1rem 0;
-}
-
-/* Profile */
-#profile-gallery img {
-  width: 100px;
-  margin: 0.5rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-/* Admin Panel */
-#admin-panel {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #f9fcfa;
-  border: 1px solid #cce3d8;
-  border-radius: 8px;
-}
-
-#citizen-list {
-  list-style: none;
-  margin-top: 0.5rem;
-}
-
-#citizen-list li {
-  padding: 0.3rem 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-/* Apartment Info */
-#apartment-info {
-  font-weight: bold;
-  color: #14532d;
-  margin-top: 1rem;
-}
-
-/* Passport Link */
-.passport-link {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background-color: #d4af37; /* golden */
-  color: #1e3d2f;
-  text-decoration: none;
-  border-radius: 6px;
-  font-weight: bold;
-}
-
-.passport-link:hover {
-  background-color: #c49e2e;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  input[type="text"],
-  input[type="password"],
-  textarea {
-    width: 95%;
+  if (!chipId || !name) {
+    alert("Please enter both Chip ID and Name.");
+    return;
   }
 
-  .tabs {
-    flex-direction: column;
+  citizens[chipId] = name;
+  localStorage.setItem("germarkCitizens", JSON.stringify(citizens));
+  updateCitizenList();
+  document.getElementById("new-chip-id").value = "";
+  document.getElementById("new-citizen-name").value = "";
+}
+
+function removeCitizen(chipId) {
+  if (citizens[chipId]) {
+    delete citizens[chipId];
+    localStorage.setItem("germarkCitizens", JSON.stringify(citizens));
+    updateCitizenList();
+  }
+}
+
+function updateCitizenList() {
+  const list = document.getElementById("citizen-list");
+  list.innerHTML = "";
+  const entries = Object.entries(citizens);
+  document.getElementById("citizen-count").textContent = `Total Citizens: ${entries.length}`;
+
+  entries.forEach(([chip, name]) => {
+    const li = document.createElement("li");
+    li.textContent = `${chip} → ${name}`;
+    list.appendChild(li);
+  });
+}
+
+// Apartment
+function assignApartment(name, apartment) {
+  if (!name || !apartment) return;
+  localStorage.setItem(`apartment_${name}`, apartment);
+  updateApartmentDisplay(name);
+}
+
+function loadApartment() {
+  updateApartmentDisplay(currentUser);
+}
+
+function updateApartmentDisplay(name) {
+  const apt = localStorage.getItem(`apartment_${name}`);
+  document.getElementById("apartment-info").textContent = apt ? `Apartment: ${apt}` : "No apartment assigned.";
+}
+
+// News
+function addNews() {
+  const title = document.getElementById("news-title").value.trim();
+  const body = document.getElementById("news-body").value.trim();
+  const imageInput = document.getElementById("news-image");
+  const file = imageInput.files[0];
+
+  if (!title || !body) {
+    alert("Please enter both title and content.");
+    return;
   }
 
-  .logo-small {
-    width: 30px;
-  }
+  const reader = new FileReader();
+  reader.onload = function () {
+    const newsItem = {
+      title,
+      body,
+      image: reader.result
+    };
 
-  .flag-small {
-    width: 50px;
-  }
+    const existingNews = JSON.parse(localStorage.getItem("germarkNews") || "[]");
+    existingNews.push(newsItem);
+    localStorage.setItem("germarkNews", JSON.stringify(existingNews));
+    displayNews();
+    document.getElementById("news-title").value = "";
+    document.getElementById("news-body").value = "";
+    imageInput.value = "";
+  };
 
-  .login-icon {
-    width: 30px;
+  if (file) {
+    reader.readAsDataURL(file);
+  } else {
+    const newsItem = { title, body, image: null };
+    const existingNews = JSON.parse(localStorage.getItem("germarkNews") || "[]");
+    existingNews.push(newsItem);
+    localStorage.setItem("germarkNews", JSON.stringify(existingNews));
+    displayNews();
+    document.getElementById("news-title").value = "";
+    document.getElementById("news-body").value = "";
   }
+}
 
-  .flag {
-    width: 90px;
-  }
+function removeLastNews() {
+  const existingNews = JSON.parse(localStorage.getItem("germarkNews") || "[]");
+  existingNews.pop();
+  localStorage.setItem("germarkNews", JSON.stringify(existingNews));
+  displayNews();
+}
+
+function displayNews() {
+  const container = document.getElementById("news-articles");
+  container.innerHTML = "";
+  const newsList = JSON.parse(localStorage.getItem("germarkNews") || "[]");
+
+  newsList.forEach(item => {
+    const article = document.createElement("article");
+    article.innerHTML = `
+      <h5>${item.title}</h5>
+      <p>${item.body}</p>
+      ${item.image ? `<img src="${item.image}" class="news-image" />` : ""}
+    `;
+    container.appendChild(article);
+  });
 }
